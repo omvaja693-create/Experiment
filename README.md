@@ -1,6 +1,6 @@
 # 📊 Global Sales Performance Dashboard — Power BI Project
 
-![Sales Performance Dashboard](./UI.png)
+![Sales Performance Dashboard](https://raw.githubusercontent.com/omvaja693-create/Experiment/main/UI.png)
 
 ---
 
