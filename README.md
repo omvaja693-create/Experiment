@@ -101,6 +101,13 @@ The dashboard is powered by the **Global Superstore** dataset (`Global Superstor
 - Microsoft Excel or compatible viewer for the `.xls` data file
 
 ---
+## 🌐 Live Portfolio Site
+
+This project also includes a fully responsive **GitHub Pages portfolio site** built with HTML, CSS & JavaScript — showcasing the dashboard in a professional, interactive web layout.
+
+The site features a dark-themed UI with animated backgrounds, live metric cards, a dashboard preview with browser frame, feature highlights, tech stack section, and repo file structure — all accessible directly from the browser without any downloads.
+
+👉 **Live Site:** [View Dashboard Portfolio](https://omvaja693-create.github.io/Experiment/)
 
 ## 👤 Author
 
