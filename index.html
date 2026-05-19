@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Global Sales Dashboard | Om Vaja</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --card: #16161f;
+      --border: rgba(99,179,237,0.12);
+      --accent: #3b82f6;
+      --accent2: #06b6d4;
+      --accent3: #8b5cf6;
+      --gold: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --glow: rgba(59,130,246,0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
+    }
+
+    /* ── ANIMATED BG GRADIENT ── */
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 10%, rgba(59,130,246,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 80%, rgba(139,92,246,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(6,182,212,0.04) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgPulse {
+      from { opacity: 0.6; }
+      to { opacity: 1; }
+    }
+
+    /* ── GRID LINES ── */
+    .grid-lines {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 3rem;
+      background: rgba(10,10,15,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+
+    .nav-links a:hover { color: var(--accent2); }
+
+    .nav-badge {
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.25);
+      color: var(--accent2);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      padding: 0.4rem 1.2rem;
+      border-radius: 100px;
+      margin-bottom: 2rem;
+      letter-spacing: 2px;
+      animation: fadeDown 0.8s ease both;
+    }
+
+    .hero-tag::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent2);
+      border-radius: 50%;
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4rem, 10vw, 9rem);
+      line-height: 0.9;
+      letter-spacing: 4px;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 1s ease 0.2s both;
+    }
+
+    .hero-title span {
+      display: block;
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-title .sub {
+      background: linear-gradient(135deg, var(--accent3), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 55%;
+    }
+
+    .hero-desc {
+      max-width: 560px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      margin-bottom: 3rem;
+      animation: fadeUp 1s ease 0.4s both;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 1s ease 0.6s both;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+      padding: 0.9rem 2.2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 30px rgba(59,130,246,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 50px rgba(59,130,246,0.5);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      padding: 0.9rem 2.2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── METRICS STRIP ── */
+    .metrics {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      gap: 1px;
+      padding: 0 2rem 5rem;
+      flex-wrap: wrap;
+      animation: fadeUp 1s ease 0.8s both;
+    }
+
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.8rem 3rem;
+      text-align: center;
+      flex: 1;
+      min-width: 180px;
+      max-width: 260px;
+      transition: background 0.3s;
+    }
+
+    .metric-card:first-child { border-radius: 12px 0 0 12px; }
+    .metric-card:last-child { border-radius: 0 12px 12px 0; }
+    .metric-card:hover { background: rgba(59,130,246,0.05); }
+
+    .metric-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.8rem;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 0.5rem;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── DASHBOARD PREVIEW ── */
+    .preview-section {
+      position: relative;
+      z-index: 1;
+      padding: 2rem 2rem 6rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      color: var(--accent2);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      letter-spacing: 3px;
+      text-align: center;
+      margin-bottom: 3rem;
+      color: var(--text);
+    }
+
+    .dashboard-frame {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow:
+        0 0 0 1px rgba(59,130,246,0.1),
+        0 40px 80px rgba(0,0,0,0.6),
+        0 0 80px rgba(59,130,246,0.08);
+    }
+
+    .dashboard-topbar {
+      background: var(--surface);
+      padding: 0.9rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+
+    .topbar-url {
+      margin-left: 0.8rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 1rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .dashboard-img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    /* fallback if image not loaded */
+    .dashboard-placeholder {
+      width: 100%;
+      height: 500px;
+      background: linear-gradient(135deg, #111118 0%, #16161f 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .placeholder-icon {
+      font-size: 4rem;
+      opacity: 0.3;
+    }
+
+    .placeholder-text {
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+    }
+
+    /* ── FEATURES GRID ── */
+    .features-section {
+      position: relative;
+      z-index: 1;
+      padding: 2rem 2rem 6rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .feature-card {
+      background: var(--card);
+      padding: 2.5rem;
+      transition: background 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover { background: rgba(59,130,246,0.04); }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1.2rem;
+      display: block;
+    }
+
+    .feature-title {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.6rem;
+      color: var(--text);
+    }
+
+    .feature-desc {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    /* ── TECH STACK ── */
+    .tech-section {
+      position: relative;
+      z-index: 1;
+      padding: 2rem 2rem 6rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .tech-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2.5rem;
+    }
+
+    .tech-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 0.7rem 1.5rem;
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: border-color 0.3s, transform 0.2s;
+    }
+
+    .tech-pill:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .tech-pill .pill-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ── REPO STRUCTURE ── */
+    .repo-section {
+      position: relative;
+      z-index: 1;
+      padding: 2rem 2rem 6rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .repo-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .repo-header {
+      background: var(--surface);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      border-bottom: 1px solid var(--border);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .repo-body {
+      padding: 1.5rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.88rem;
+      line-height: 2;
+    }
+
+    .repo-line { display: flex; align-items: center; gap: 0.8rem; }
+    .repo-line .icon { opacity: 0.7; }
+    .repo-line .file { color: var(--text); }
+    .repo-line .comment { color: var(--muted); font-size: 0.78rem; }
+    .repo-line .accent { color: var(--accent2); }
+    .repo-line .gold { color: var(--gold); }
+    .repo-line .purple { color: var(--accent3); }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    .footer-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-sub {
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1.5rem;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+
+    .footer-links a:hover { color: var(--accent2); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      .metric-card:first-child, .metric-card:last-child { border-radius: 0; }
+      .metrics { gap: 1px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-gradient"></div>
+  <div class="grid-lines"></div>
+
+  <!-- NAVBAR -->
+  <nav>
+    <div class="nav-logo">OM VAJA</div>
+    <ul class="nav-links">
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#repo">Repository</a></li>
+    </ul>
+    <span class="nav-badge">Power BI</span>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tag">POWER BI · DATA ANALYTICS · 2026</div>
+    <h1 class="hero-title">
+      <span>GLOBAL SALES</span>
+      <span class="sub">PERFORMANCE DASHBOARD</span>
+    </h1>
+    <p class="hero-desc">
+      An interactive Power BI dashboard analyzing <strong>$12.64M in global sales</strong>
+      across 25K orders — uncovering trends, profitability, and regional insights
+      from the Global Superstore dataset.
+    </p>
+    <div class="hero-buttons">
+      <a href="https://github.com/omvaja693-create/Global_Sales_Dash" class="btn-primary" target="_blank">
+        ⭐ View on GitHub
+      </a>
+      <a href="#dashboard" class="btn-secondary">📊 See Dashboard</a>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-value">$12.64M</div>
+      <div class="metric-label">Total Sales</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">25K</div>
+      <div class="metric-label">Total Orders</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">$1.35M</div>
+      <div class="metric-label">Shipping Cost</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">2011–14</div>
+      <div class="metric-label">Date Range</div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PREVIEW -->
+  <section class="preview-section" id="dashboard">
+    <p class="section-label">// Dashboard Preview</p>
+    <h2 class="section-title">THE DASHBOARD</h2>
+    <div class="dashboard-frame">
+      <div class="dashboard-topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <div class="topbar-url">app.powerbi.com · Global Sales Dashboard</div>
+      </div>
+      <img
+        src="UI.png"
+        alt="Global Sales Performance Dashboard"
+        class="dashboard-img"
+        onerror="this.style.display='none'; document.querySelector('.dashboard-placeholder').style.display='flex';"
+      />
+      <div class="dashboard-placeholder" style="display:none;">
+        <div class="placeholder-icon">📊</div>
+        <div class="placeholder-text">UI.PNG · DASHBOARD PREVIEW</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features-section" id="features">
+    <p class="section-label">// Key Insights</p>
+    <h2 class="section-title">WHAT'S INSIDE</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">📅</span>
+        <div class="feature-title">Time Series Analysis</div>
+        <div class="feature-desc">Order quantity trends from 2011–2014 with seasonal spike detection and year-over-year growth patterns.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🌍</span>
+        <div class="feature-title">Profit by Country</div>
+        <div class="feature-desc">USA leads profitability, followed by China, India, UK, France, Germany & Australia — all at a glance.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🗺️</span>
+        <div class="feature-title">State-Level Treemap</div>
+        <div class="feature-desc">Visual breakdown of profit by state — England, California, New York, Île-de-France & New South Wales.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🏙️</span>
+        <div class="feature-title">Top Cities by Profit</div>
+        <div class="feature-desc">New York City leads, followed by Los Angeles, Seattle, Managua & San Francisco in profitability ranking.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🛍️</span>
+        <div class="feature-title">Category Breakdown</div>
+        <div class="feature-desc">Technology (45%), Office Supplies (35%), Furniture (19%) — profit contribution by product category.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🎯</span>
+        <div class="feature-title">Discount vs Quantity</div>
+        <div class="feature-desc">Analyzes the relationship between discount levels and order volumes to optimize pricing strategy.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH STACK -->
+  <section class="tech-section">
+    <p class="section-label">// Built With</p>
+    <h2 class="section-title">TECH STACK</h2>
+    <div class="tech-pills">
+      <div class="tech-pill"><span class="pill-dot" style="background:#f59e0b"></span> Microsoft Power BI</div>
+      <div class="tech-pill"><span class="pill-dot" style="background:#22c55e"></span> Microsoft Excel (.xls)</div>
+      <div class="tech-pill"><span class="pill-dot" style="background:#3b82f6"></span> Global Superstore Dataset</div>
+      <div class="tech-pill"><span class="pill-dot" style="background:#8b5cf6"></span> DAX Measures</div>
+      <div class="tech-pill"><span class="pill-dot" style="background:#06b6d4"></span> GitHub Pages</div>
+    </div>
+  </section>
+
+  <!-- REPO STRUCTURE -->
+  <section class="repo-section" id="repo">
+    <p class="section-label" style="text-align:center;">// Repository</p>
+    <h2 class="section-title" style="text-align:center; font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:3px;">FILE STRUCTURE</h2>
+    <div class="repo-box">
+      <div class="repo-header">
+        📁 &nbsp; omvaja693-create / Global_Sales_Dash
+      </div>
+      <div class="repo-body">
+        <div class="repo-line">
+          <span class="icon">📄</span>
+          <span class="file accent">README.md</span>
+          <span class="comment">← Project documentation</span>
+        </div>
+        <div class="repo-line">
+          <span class="icon">📄</span>
+          <span class="file accent">LICENSE.txt</span>
+          <span class="comment">← MIT License</span>
+        </div>
+        <div class="repo-line">
+          <span class="icon">🌐</span>
+          <span class="file gold">index.html</span>
+          <span class="comment">← This GitHub Pages site</span>
+        </div>
+        <div class="repo-line">
+          <span class="icon">📊</span>
+          <span class="file purple">Global_Sales.pbix</span>
+          <span class="comment">← Power BI report</span>
+        </div>
+        <div class="repo-line">
+          <span class="icon">📗</span>
+          <span class="file" style="color:#22c55e;">Global Superstore.xls</span>
+          <span class="comment">← Source dataset</span>
+        </div>
+        <div class="repo-line">
+          <span class="icon">🖼️</span>
+          <span class="file" style="color:#f472b6;">UI.png</span>
+          <span class="comment">← Dashboard screenshot</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-name">OM VAJA</div>
+    <div class="footer-sub">Data Analytics · Power BI · Built with 💙</div>
+    <div class="footer-links">
+      <a href="https://github.com/omvaja693-create/Global_Sales_Dash" target="_blank">GitHub</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#features">Features</a>
+    </div>
+  </footer>
+
+</body>
+</html>
